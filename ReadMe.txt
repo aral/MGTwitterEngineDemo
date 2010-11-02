@@ -4,7 +4,7 @@ Copyright 2010 Aral Balkan. All Rights Reserved.
 
 License: MIT
 
-This demo project shows you how to get MGTwitterEngine up and running with XAuth. 
+This demo project shows you how to get MGTwitterEngine (http://github.com/mattgemmell/MGTwitterEngine) up and running with XAuth. 
 
 Since MGTwitterEngine now has oAuth/xAuth support, you should no longer use my stop-gap XAuthTwitterEngine in your apps. This demo is a modified version of the XAuthTwitterEngine demo app so it will hopefully show you how to modify your apps to use MGTwitterEngine.
 
