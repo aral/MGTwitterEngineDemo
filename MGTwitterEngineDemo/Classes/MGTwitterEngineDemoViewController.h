@@ -10,6 +10,19 @@
 #import "MGTwitterEngineDelegate.h"
 #import "OAToken.h"
 
+//
+// ************************
+// IMPORTANT NOTE: 
+// ************************
+//
+// You _must_ ask Twitter to activate xAuth support for your app by emailing them at api@twitter.com
+// 
+// For more information on xAuth in general, please see Isaiah's Five Things You Didn't Know About XAuth:
+// http://yourhead.tumblr.com/post/428643811/five-things-you-didnt-know-about-xauth
+//
+// ************************
+//
+
 #define kOAuthConsumerKey		@""		// Replace these with your consumer key 
 #define	kOAuthConsumerSecret	@""		// and consumer secret from 
 										// http://twitter.com/oauth_clients/details/<your app id>

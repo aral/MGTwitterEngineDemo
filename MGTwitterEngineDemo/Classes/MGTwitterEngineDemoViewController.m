@@ -17,38 +17,45 @@
 
 @synthesize usernameTextField, passwordTextField, twitterEngine, sendTweetButton;
 
-/*
-// The designated initializer. Override to perform setup that is required before the view is loaded.
-- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
-    if (self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil]) {
-        // Custom initialization
-    }
-    return self;
-}
-*/
+#pragma mark -
+#pragma mark Memory management
 
-/*
-// Implement loadView to create a view hierarchy programmatically, without using a nib.
-- (void)loadView {
+- (void)viewDidUnload {
+	self.usernameTextField = nil;
+	self.passwordTextField = nil;
+	self.sendTweetButton = nil;
 }
-*/
 
+
+- (void)dealloc {
+	
+	[usernameTextField release];
+	[passwordTextField release];
+	[sendTweetButton release];
+	[twitterEngine release];
+	
+    [super dealloc];
+}
+
+#pragma mark -
+#pragma mark Life-cycle methods
+
+-(id)initWithCoder:(NSCoder *)aDecoder
+{
+	self = [super initWithCoder:aDecoder];
+	if (self)
+	{
+		// Custom initialization.
+		self.twitterEngine = [[[MGTwitterEngine alloc] initWithDelegate:self] autorelease];
+	}
+	return self;
+}
 
 
 // Implement viewDidLoad to do additional setup after loading the view, typically from a nib.
 - (void)viewDidLoad {
     [super viewDidLoad];
-	
-	//
-	// Initialize the XAuthTwitterEngine.
-	//
-	/*
-	self.twitterEngine = [[XAuthTwitterEngine alloc] initXAuthWithDelegate:self];
-	self.twitterEngine.consumerKey = kOAuthConsumerKey;
-	self.twitterEngine.consumerSecret = kOAuthConsumerSecret;
-	*/
-	
-	self.twitterEngine = [[[MGTwitterEngine alloc] initWithDelegate:self] autorelease];
+		
 
 	// Sanity check
 	if ([kOAuthConsumerKey isEqualToString:@""] || [kOAuthConsumerSecret isEqualToString:@""])
@@ -96,41 +103,6 @@
 }
 
 
-
-/*
-// Override to allow orientations other than the default portrait orientation.
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
-    // Return YES for supported orientations
-    return (interfaceOrientation == UIInterfaceOrientationPortrait);
-}
-*/
-
-- (void)didReceiveMemoryWarning {
-	// Releases the view if it doesn't have a superview.
-    [super didReceiveMemoryWarning];
-	
-	// Release any cached data, images, etc that aren't in use.
-}
-
-- (void)viewDidUnload {
-	// Release any retained subviews of the main view.
-	// e.g. self.myOutlet = nil;
-	self.usernameTextField = nil;
-	self.passwordTextField = nil;
-	self.sendTweetButton = nil;
-}
-
-
-- (void)dealloc {
-	
-	[self.usernameTextField release];
-	[self.passwordTextField release];
-	[self.sendTweetButton release];
-	[self.twitterEngine release];
-	
-    [super dealloc];
-}
-
 #pragma mark -
 #pragma mark Actions
 
@@ -142,8 +114,6 @@
 	NSLog(@"About to request an xAuth token exchange for username: ]%@[ password: ]%@[.",
 		  username, password);
 	
-	//[self.twitterEngine exchangeAccessTokenForUsername:username password:password];
-	
 	[self.twitterEngine getXAuthAccessTokenForUsername:username password:password];
 }
 
@@ -151,45 +121,11 @@
 {
 	// Adding random number to the tweet to avoid Twitter's 403 "Status is a duplicate" error.
 	NSString *tweetText = [NSString stringWithFormat:@"Testing xAuth from the MGTwitterEngineDemo by @aral! %d", arc4random()%144];
+	
 	NSLog(@"About to send test tweet: \"%@\"", tweetText);
+	
 	[self.twitterEngine sendUpdate:tweetText];
 }
-
-/*
-#pragma mark -
-#pragma mark XAuthTwitterEngineDelegate methods
-
-- (void) storeCachedTwitterXAuthAccessTokenString: (NSString *)tokenString forUsername:(NSString *)username
-{
-	//
-	// Note: do not use NSUserDefaults to store this in a production environment. 
-	// ===== Use the keychain instead. Check out SFHFKeychainUtils if you want 
-	//       an easy to use library. (http://github.com/ldandersen/scifihifi-iphone) 
-	//
-	NSLog(@"Access token string returned: %@", tokenString);
-	
-	[[NSUserDefaults standardUserDefaults] setObject:tokenString forKey:kCachedXAuthAccessTokenStringKey];
-	
-	// Enable the send tweet button.
-	self.sendTweetButton.enabled = YES;
-}
-
- - (NSString *) cachedTwitterXAuthAccessTokenStringForUsername: (NSString *)username;
-{
-	NSString *accessTokenString = [[NSUserDefaults standardUserDefaults] objectForKey:kCachedXAuthAccessTokenStringKey];
-	
-	NSLog(@"About to return access token string: %@", accessTokenString);
-	
-	return accessTokenString;
-}
-
- - (void) twitterXAuthConnectionDidFailWithError: (NSError *)error;
-{
-	NSLog(@"Error: %@", error);
-	
-	UIAlertViewQuick(@"Authentication error", @"Please check your username and password and try again.", @"OK");
-}
-*/
 
 #pragma mark -
 #pragma mark MGTwitterEngineDelegate methods
@@ -204,19 +140,12 @@
 - (void)accessTokenReceived:(OAToken *)token forRequest:(NSString *)connectionIdentifier
 {
 	//
-	// Don't do this in production code – save to the keychain instead. Use SCIFIHIFI-iPhone-Security library for an easy solution.
+	// We've got an oAuth access token from Twitter. Let's save it.
 	//
 	NSString *tokenKey = token.key;
 	NSString *tokenSecret = token.secret;
 	
-	/*
-	NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-	[userDefaults setBool:YES forKey:kHaveCachedToken];
-	[userDefaults setObject:tokenKey forKey:kTokenKey];
-	[userDefaults setObject:tokenSecret forKey:kTokenSecret];
-	*/
-	
-	// Save the token in the keychain. 
+	// Save the token securely in the keychain. 
 	// (Note: this SFHFKeychainUtils method doesn't return a value.)
 	NSError *error = nil;
 	[SFHFKeychainUtils storeUsername:tokenKey andPassword:tokenSecret forServiceName:kMGTwitterEngineDemoServiceName sharedKeychainAccessGroupName:nil updateExisting:YES error:&error];
@@ -247,8 +176,6 @@
 - (void)requestSucceeded:(NSString *)connectionIdentifier
 {
 	NSLog(@"Twitter request succeeded: %@", connectionIdentifier);
-	
-
 }
 
 - (void)requestFailed:(NSString *)connectionIdentifier withError:(NSError *)error
